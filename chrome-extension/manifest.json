@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "youtube-local Redirect",
+  "description": "Redirects YouTube pages to a local youtube-local instance running at http://localhost:8080.",
+  "version": "1.0.0",
+  "permissions": ["declarativeNetRequest"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://youtu.be/*",
+    "*://*.youtube-nocookie.com/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "redirect_rules",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
