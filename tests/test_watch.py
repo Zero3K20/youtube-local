@@ -2,7 +2,7 @@ import urllib.parse
 
 from youtube import util, watch
 
-TEST_TITLE_WITH_INVALID_CHARS = 'a:b?/\\*<>|"'
+TEST_TITLE_WITH_INVALID_FILENAME_CHARS = 'a:b?/\\*<>|"'
 
 
 def test_add_video_title_to_format_urls_keeps_direct_urls():
@@ -17,8 +17,9 @@ def test_add_video_title_to_format_urls_keeps_direct_urls():
         },
     ]
 
-    title = TEST_TITLE_WITH_INVALID_CHARS
+    title = TEST_TITLE_WITH_INVALID_FILENAME_CHARS
     expected_name = urllib.parse.quote(util.to_valid_filename(title))
+    assert expected_name == 'a-b_____-%27'
     watch.add_video_title_to_format_urls(formats, title)
 
     assert formats[0]['url'].startswith('https://')

@@ -558,6 +558,7 @@ def add_video_title_to_format_urls(formats, title):
 
     URLs with /videoplayback are rewritten to
     /videoplayback/name/<title>[.<ext>]...
+    URLs without /videoplayback are left unchanged.
     Empty titles become "_" via util.to_valid_filename.
 
     Args:
@@ -572,10 +573,11 @@ def add_video_title_to_format_urls(formats, title):
         ext = fmt.get('ext')
         if ext:
             filename += '.' + ext
-        fmt['url'] = fmt['url'].replace(
-            '/videoplayback',
-            '/videoplayback/name/' + filename,
-            1)
+        if '/videoplayback' in fmt['url']:
+            fmt['url'] = fmt['url'].replace(
+                '/videoplayback',
+                '/videoplayback/name/' + filename,
+                1)
 
 
 time_table = {'h': 3600, 'm': 60, 's': 1}
