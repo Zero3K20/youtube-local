@@ -120,7 +120,7 @@ def proxy_site(env, start_response, video=False):
             # playing
             try:
                 content_part = response.read(32*8192)
-            except (urllib3.exceptions.ReadTimeoutError, socket.timeout):
+            except (urllib3.exceptions.ReadTimeoutError, socket.timeout) as err:
                 content_part = b''
                 if total_received < content_length:
                     if 'Range' in send_headers:
@@ -137,7 +137,7 @@ def proxy_site(env, start_response, video=False):
                     print(
                         'Warning: Youtube read timed out before byte',
                         str(fail_byte) + '.', 'Expected', start+content_length,
-                        'bytes.'
+                        'bytes.', 'Error:', repr(err)
                     )
 
                     retry = True
