@@ -556,9 +556,9 @@ def get_storyboard_vtt():
 def add_video_title_to_format_urls(formats, title):
     '''Add a sanitized title segment to each format URL in-place.
 
-    Routed URLs with /videoplayback are rewritten to
+    URLs with /videoplayback are rewritten to
     /videoplayback/name/<title>[.<ext>]...
-    Direct URLs (not routed through youtube-local) are left unchanged.
+    URLs without /videoplayback are left unchanged.
     Empty titles become "_" via util.to_valid_filename.
 
     Args:
@@ -573,7 +573,7 @@ def add_video_title_to_format_urls(formats, title):
         ext = fmt.get('ext')
         if ext:
             filename += '.' + ext
-        if fmt['url'].startswith('/') and '/videoplayback' in fmt['url']:
+        if '/videoplayback' in fmt['url']:
             fmt['url'] = fmt['url'].replace(
                 '/videoplayback',
                 '/videoplayback/name/' + filename,
