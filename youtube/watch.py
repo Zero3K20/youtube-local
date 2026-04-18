@@ -553,6 +553,33 @@ def get_storyboard_vtt():
     return flask.Response(r, mimetype='text/vtt')
 
 
+def add_video_title_to_format_urls(formats, title):
+    '''Add a sanitized title segment to each format URL in-place.
+
+    URLs with /videoplayback are rewritten to
+    /videoplayback/name/<title>[.<ext>]...
+    URLs without /videoplayback are left unchanged.
+    Empty titles become "_" via util.to_valid_filename.
+
+    Args:
+        formats: List of format dictionaries containing a 'url' key and
+            optional 'ext' key. Each dictionary is modified in-place.
+        title: Video title string (or None) used to build the filename
+            segment inserted into each format URL.
+    '''
+    title = urllib.parse.quote(util.to_valid_filename(title or ''))
+    for fmt in formats:
+        filename = title
+        ext = fmt.get('ext')
+        if ext:
+            filename += '.' + ext
+        if '/videoplayback' in fmt['url']:
+            fmt['url'] = fmt['url'].replace(
+                '/videoplayback',
+                '/videoplayback/name/' + filename,
+                1)
+
+
 time_table = {'h': 3600, 'm': 60, 's': 1}
 @yt_app.route('/watch')
 @yt_app.route('/embed')
@@ -623,23 +650,9 @@ def get_watch_page(video_id=None):
                 item['url'] += '&index=' + str(item['index'])
         info['playlist']['author_url'] = util.prefix_url(
             info['playlist']['author_url'])
-    if settings.img_prefix:
-        # Don't prefix hls_formats for now because the urls inside the manifest
-        # would need to be prefixed as well.
-        for fmt in info['formats']:
-            fmt['url'] = util.prefix_url(fmt['url'])
-
-    # Add video title to end of url path so it has a filename other than just
-    # "videoplayback" when downloaded
-    title = urllib.parse.quote(util.to_valid_filename(info['title'] or ''))
-    for fmt in info['formats']:
-        filename = title
-        ext = fmt.get('ext')
-        if ext:
-            filename += '.' + ext
-        fmt['url'] = fmt['url'].replace(
-            '/videoplayback',
-            '/videoplayback/name/' + filename)
+    # Keep format URLs direct (not routed through youtube-local), and add
+    # title-based download filenames.
+    add_video_title_to_format_urls(info['formats'], info['title'])
 
 
     download_formats = []
@@ -866,6 +879,3 @@ def get_transcript(caption_path):
 
     return flask.Response(result.encode('utf-8'),
         mimetype='text/plain;charset=UTF-8')
-
-
-
