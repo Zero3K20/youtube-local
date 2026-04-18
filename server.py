@@ -80,6 +80,7 @@ def proxy_site(env, start_response, video=False):
             use_tor = (settings.route_tor == 2) or params_use_tor
             response, cleanup_func = util.fetch_url_response(url, send_headers,
                                                              use_tor=use_tor,
+                                                             timeout=45,
                                                              max_redirects=10)
         else:
             response, cleanup_func = util.fetch_url_response(url, send_headers)
@@ -117,7 +118,37 @@ def proxy_site(env, start_response, video=False):
             # allows video to buffer in those increments, meaning user must
             # wait until the entire chunk is downloaded before video starts
             # playing
-            content_part = response.read(32*8192)
+            try:
+                content_part = response.read(32*8192)
+            except (urllib3.exceptions.ReadTimeoutError, socket.timeout) as err:
+                content_part = b''
+                if total_received < content_length:
+                    if 'Range' in send_headers:
+                        int_range = parse_range(send_headers['Range'],
+                                                content_length)
+                        if not int_range: # give up b/c unrecognized range
+                            break
+                        start, end = int_range
+                    else:
+                        start, end = 0, (content_length - 1)
+
+                    fail_byte = start + total_received
+                    send_headers['Range'] = 'bytes=%d-%d' % (fail_byte, end)
+                    expected_bytes = end + 1
+                    print(
+                        'Warning: Youtube read timed out before byte',
+                        str(fail_byte) + '.', 'Expected', expected_bytes,
+                        'bytes.', 'Error:', repr(err)
+                    )
+
+                    retry = True
+                    first_attempt = False
+                    if fail_byte == current_attempt_position:
+                        try_num += 1
+                    else:
+                        try_num = 1
+                        current_attempt_position = fail_byte
+                break
             total_received += len(content_part)
             if not content_part:
                 # Sometimes Youtube closes the connection before sending all of
@@ -136,9 +167,10 @@ def proxy_site(env, start_response, video=False):
 
                     fail_byte = start + total_received
                     send_headers['Range'] = 'bytes=%d-%d' % (fail_byte, end)
+                    expected_bytes = end + 1
                     print(
                         'Warning: Youtube closed the connection before byte',
-                        str(fail_byte) + '.', 'Expected', start+content_length,
+                        str(fail_byte) + '.', 'Expected', expected_bytes,
                         'bytes.'
                     )
 
