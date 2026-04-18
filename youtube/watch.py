@@ -580,6 +580,24 @@ def add_video_title_to_format_urls(formats, title):
                 1)
 
 
+def route_pair_source_urls(pair_sources):
+    '''Prefix pair source media URLs to route through the local proxy.
+
+    AV-merge fetches pair sources via XHR (Range requests). Browsers block
+    cross-origin XHR unless the server returns Access-Control-Allow-Origin.
+    Routing through the local proxy adds that header (see server.py), while
+    the proxy transparently strips the /name/... title segment before
+    forwarding to googlevideo.com.
+    '''
+    for pair_info in pair_sources:
+        for source in pair_info.get('videos', ()):
+            if source.get('url'):
+                source['url'] = util.prefix_url(source['url'])
+        for source in pair_info.get('audios', ()):
+            if source.get('url'):
+                source['url'] = util.prefix_url(source['url'])
+
+
 time_table = {'h': 3600, 'm': 60, 's': 1}
 @yt_app.route('/watch')
 @yt_app.route('/embed')
@@ -680,6 +698,10 @@ def get_watch_page(video_id=None):
     uni_sources = source_info['uni_sources']
     pair_sources = source_info['pair_sources']
     uni_idx, pair_idx = source_info['uni_idx'], source_info['pair_idx']
+    # Route pair source URLs through the local proxy so AV-merge XHR requests
+    # get Access-Control-Allow-Origin headers. Integrated (uni) sources are
+    # played directly via <video src> and do not need the proxy.
+    route_pair_source_urls(pair_sources)
 
     pair_quality = yt_data_extract.deep_get(pair_sources, pair_idx, 'quality')
     uni_quality = yt_data_extract.deep_get(uni_sources, uni_idx, 'quality')

@@ -47,3 +47,24 @@ def test_add_video_title_to_format_urls_handles_missing_title():
     ]
     watch.add_video_title_to_format_urls(formats, '')
     assert '/videoplayback/name/_.mp4?' in formats[0]['url']
+
+
+def test_route_pair_source_urls_prefixes_video_and_audio():
+    pair_sources = [{
+        'videos': [{'url': 'https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback/name/title.mp4?video=1'}],
+        'audios': [{'url': 'https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback/name/title?audio=1'}],
+    }]
+
+    watch.route_pair_source_urls(pair_sources)
+
+    # URLs must be proxy-prefixed so AV-merge XHR goes through the local server
+    # which adds Access-Control-Allow-Origin headers.
+    assert pair_sources[0]['videos'][0]['url'].startswith('/')
+    assert not pair_sources[0]['videos'][0]['url'].startswith('//')
+    assert pair_sources[0]['audios'][0]['url'].startswith('/')
+    assert not pair_sources[0]['audios'][0]['url'].startswith('//')
+
+
+def test_route_pair_source_urls_ignores_missing_url():
+    pair_sources = [{'videos': [{}], 'audios': [{}]}]
+    watch.route_pair_source_urls(pair_sources)  # must not raise
