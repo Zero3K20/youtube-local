@@ -64,6 +64,7 @@ class MockResponse:
 def test_proxy_site_retries_on_read_timeout(monkeypatch):
     server = load_server_module(monkeypatch)
     request_headers = []
+    request_kwargs = []
     responses = [
         MockResponse(
             [
@@ -78,6 +79,7 @@ def test_proxy_site_retries_on_read_timeout(monkeypatch):
 
     def mock_fetch_url_response(_url, send_headers, *args, **kwargs):
         request_headers.append(dict(send_headers))
+        request_kwargs.append(dict(kwargs))
         return responses.pop(0), (lambda _response: None)
 
     monkeypatch.setattr(server.util, 'fetch_url_response', mock_fetch_url_response)
@@ -100,3 +102,4 @@ def test_proxy_site_retries_on_read_timeout(monkeypatch):
     assert body == b'abcdef'
     assert response_meta['status'] == '200 OK'
     assert request_headers[1]['Range'] == 'bytes=3-5'
+    assert request_kwargs[0]['timeout'] == 45

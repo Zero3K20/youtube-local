@@ -80,6 +80,7 @@ def proxy_site(env, start_response, video=False):
             use_tor = (settings.route_tor == 2) or params_use_tor
             response, cleanup_func = util.fetch_url_response(url, send_headers,
                                                              use_tor=use_tor,
+                                                             timeout=45,
                                                              max_redirects=10)
         else:
             response, cleanup_func = util.fetch_url_response(url, send_headers)
