@@ -580,6 +580,18 @@ def add_video_title_to_format_urls(formats, title):
                 1)
 
 
+def pair_sources_are_direct(pair_sources):
+    '''True when any pair source media URL is direct (not proxy-prefixed).'''
+    for pair_info in pair_sources:
+        for source in pair_info.get('videos', ()):
+            if source.get('url', '').startswith(('http://', 'https://')):
+                return True
+        for source in pair_info.get('audios', ()):
+            if source.get('url', '').startswith(('http://', 'https://')):
+                return True
+    return False
+
+
 time_table = {'h': 3600, 'm': 60, 's': 1}
 @yt_app.route('/watch')
 @yt_app.route('/embed')
@@ -680,6 +692,14 @@ def get_watch_page(video_id=None):
     uni_sources = source_info['uni_sources']
     pair_sources = source_info['pair_sources']
     uni_idx, pair_idx = source_info['uni_idx'], source_info['pair_idx']
+    if pair_sources_are_direct(pair_sources):
+        # AV-merge fetches pair sources via XHR, which fails cross-origin
+        # against direct googlevideo URLs without CORS response headers.
+        # Keep playback direct by using integrated sources instead.
+        pair_sources = []
+        pair_idx = None
+        source_info['pair_sources'] = pair_sources
+        source_info['pair_idx'] = pair_idx
 
     pair_quality = yt_data_extract.deep_get(pair_sources, pair_idx, 'quality')
     uni_quality = yt_data_extract.deep_get(uni_sources, uni_idx, 'quality')

@@ -47,3 +47,21 @@ def test_add_video_title_to_format_urls_handles_missing_title():
     ]
     watch.add_video_title_to_format_urls(formats, '')
     assert '/videoplayback/name/_.mp4?' in formats[0]['url']
+
+
+def test_pair_sources_are_direct_true_for_direct_urls():
+    pair_sources = [{
+        'videos': [{'url': 'https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback?video=1'}],
+        'audios': [{'url': 'https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback?audio=1'}],
+    }]
+
+    assert watch.pair_sources_are_direct(pair_sources)
+
+
+def test_pair_sources_are_direct_false_for_proxy_prefixed_urls():
+    pair_sources = [{
+        'videos': [{'url': '/https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback?video=1'}],
+        'audios': [{'url': '/https://rr2---sn-8xgp1vo-3uhs.googlevideo.com/videoplayback?audio=1'}],
+    }]
+
+    assert not watch.pair_sources_are_direct(pair_sources)
