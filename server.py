@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
+import os
+import site
+
+
+def _extend_zope_namespace_path():
+    # Some Linux distributions provide a pkg_resources namespace package for
+    # zope in system site-packages. Add pip-installed namespace directories so
+    # gevent can import zope.event.
+    import zope
+    for base in [site.getusersitepackages(), *site.getsitepackages()]:
+        path = os.path.join(base, 'zope')
+        if os.path.isdir(path) and path not in zope.__path__:
+            zope.__path__.append(path)
+
 from gevent import monkey
-monkey.patch_all()
+try:
+    monkey.patch_all()
+except ModuleNotFoundError as exc:
+    if exc.name != 'zope.event':
+        raise
+    _extend_zope_namespace_path()
+    monkey.patch_all()
 import gevent.socket
 
 from youtube import yt_app
