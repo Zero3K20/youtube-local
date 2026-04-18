@@ -1,14 +1,11 @@
 import importlib.util
 import pathlib
-import socket
 import sys
 import types
 import urllib3
 
 
 def load_server_module(monkeypatch):
-    monkeypatch.setattr(socket, 'socket', socket.SocketType)
-
     gevent_module = types.ModuleType('gevent')
     gevent_monkey = types.ModuleType('gevent.monkey')
     gevent_socket = types.ModuleType('gevent.socket')
@@ -21,6 +18,9 @@ def load_server_module(monkeypatch):
     monkeypatch.setitem(sys.modules, 'gevent.monkey', gevent_monkey)
     monkeypatch.setitem(sys.modules, 'gevent.socket', gevent_socket)
     monkeypatch.setitem(sys.modules, 'gevent.pywsgi', gevent_pywsgi)
+    monkeypatch.setitem(sys.modules, 'socks', types.ModuleType('socks'))
+    monkeypatch.setitem(sys.modules, 'sockshandler',
+                        types.ModuleType('sockshandler'))
 
     youtube_module = types.ModuleType('youtube')
     youtube_module.yt_app = lambda env, start_response: []
@@ -69,7 +69,7 @@ def test_proxy_site_retries_on_read_timeout(monkeypatch):
         MockResponse(
             [
                 b'abc',
-                urllib3.exceptions.ReadTimeoutError(None, None,
+                urllib3.exceptions.ReadTimeoutError('mock_pool', 'mock_url',
                                                     'Read timed out.'),
             ],
             6,

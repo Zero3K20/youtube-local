@@ -134,9 +134,10 @@ def proxy_site(env, start_response, video=False):
 
                     fail_byte = start + total_received
                     send_headers['Range'] = 'bytes=%d-%d' % (fail_byte, end)
+                    expected_bytes = end + 1
                     print(
                         'Warning: Youtube read timed out before byte',
-                        str(fail_byte) + '.', 'Expected', start+content_length,
+                        str(fail_byte) + '.', 'Expected', expected_bytes,
                         'bytes.', 'Error:', repr(err)
                     )
 
@@ -166,9 +167,10 @@ def proxy_site(env, start_response, video=False):
 
                     fail_byte = start + total_received
                     send_headers['Range'] = 'bytes=%d-%d' % (fail_byte, end)
+                    expected_bytes = end + 1
                     print(
                         'Warning: Youtube closed the connection before byte',
-                        str(fail_byte) + '.', 'Expected', start+content_length,
+                        str(fail_byte) + '.', 'Expected', expected_bytes,
                         'bytes.'
                     )
 
