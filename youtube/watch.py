@@ -696,10 +696,10 @@ def get_watch_page(video_id=None):
         # AV-merge fetches pair sources via XHR, which fails cross-origin
         # against direct googlevideo URLs without CORS response headers.
         # Keep playback direct by using integrated sources instead.
-        source_info['pair_sources'] = []
-        source_info['pair_idx'] = None
-        pair_sources = source_info['pair_sources']
-        pair_idx = source_info['pair_idx']
+        pair_sources = []
+        pair_idx = None
+        source_info['pair_sources'] = pair_sources
+        source_info['pair_idx'] = pair_idx
 
     pair_quality = yt_data_extract.deep_get(pair_sources, pair_idx, 'quality')
     uni_quality = yt_data_extract.deep_get(uni_sources, uni_idx, 'quality')
