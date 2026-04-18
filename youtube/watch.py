@@ -554,7 +554,18 @@ def get_storyboard_vtt():
 
 
 def add_video_title_to_format_urls(formats, title):
-    '''Add video title to end of format URL path for download-friendly names.'''
+    '''Add a sanitized title segment to each format URL in-place.
+
+    URLs with /videoplayback are rewritten to
+    /videoplayback/name/<title>[.<ext>]...
+    Empty titles become "_" via util.to_valid_filename.
+
+    Args:
+        formats: List of format dictionaries containing a 'url' key and
+            optional 'ext' key. Each dictionary is modified in-place.
+        title: Video title string (or None) used to build the filename
+            segment inserted into each format URL.
+    '''
     title = urllib.parse.quote(util.to_valid_filename(title or ''))
     for fmt in formats:
         filename = title
@@ -563,7 +574,8 @@ def add_video_title_to_format_urls(formats, title):
             filename += '.' + ext
         fmt['url'] = fmt['url'].replace(
             '/videoplayback',
-            '/videoplayback/name/' + filename)
+            '/videoplayback/name/' + filename,
+            1)
 
 
 time_table = {'h': 3600, 'm': 60, 's': 1}
@@ -865,5 +877,3 @@ def get_transcript(caption_path):
 
     return flask.Response(result.encode('utf-8'),
         mimetype='text/plain;charset=UTF-8')
-
-
